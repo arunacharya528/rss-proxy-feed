@@ -59,6 +59,9 @@
         ],
         "art": [
             "./vendor/bin/sail artisan"
+        ],
+        "pint": [
+            "./vendor/bin/pint"
         ]
     },
     "extra": {
