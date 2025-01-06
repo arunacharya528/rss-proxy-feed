@@ -26,7 +26,7 @@ class GuardianRequestService implements NewsServiceInterface
             'endpoint' => config('guardian.news_url'),
             'api-key' => config('guardian.api_key'),
             'parameters' => http_build_query($params),
-        ])->get('{+endpoint}/?api-key={api-key}&{parameters}');
+        ])->get('{+endpoint}/search?api-key={api-key}&{parameters}');
 
         if ($response->getStatusCode() === 401) {
             throw new \Exception('Missing keys for API call');
