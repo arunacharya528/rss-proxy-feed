@@ -27,10 +27,17 @@ composer i
 
 cat .env.example > .env
 
-php artisan key:generate
+touch ./database/database.sqlite
 
 docker-compose up
 
+```
+
+Run these after docker is running:
+```
+composer art migrate
+
+composer art key:generate
 ```
 
 ### Environment Variables
