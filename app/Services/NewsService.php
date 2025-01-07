@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
+use App\Services\Abstract\AbstractNewsService;
 use App\Services\Guardian\GuardianRequestService;
-use App\Services\Interface\NewsServiceInterface;
 use Illuminate\Support\Facades\Cache;
 
 class NewsService
@@ -11,7 +11,7 @@ class NewsService
     /**
      * Currently active news service
      *
-     * @var NewsServiceInterface|string
+     * @var AbstractNewsService|string
      */
     public string $serviceClass;
 
@@ -69,10 +69,15 @@ class NewsService
             return Cache::get($this->cacheKey());
         }
 
-        $response = $this->serviceClass::getData($this->params);
+        $guardianFeeds = GuardianRequestService::make()
+            ->setAdditionalParameters($this->params)
+            ->sendRequest()
+            ->formatResponse();
 
-        Cache::put($this->cacheKey(), $response->json(), now()->addMinutes(config('panel.news_cache_invalidation_in_minutes')));
+        $rssData = $guardianFeeds->map(fn ($feed) => $feed->getRssData())->toArray();
 
-        return $response->json();
+        Cache::put($this->cacheKey(), $rssData, now()->addMinutes(config('panel.news_cache_invalidation_in_minutes')));
+
+        return $rssData;
     }
 }

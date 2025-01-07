@@ -2,32 +2,52 @@
 
 namespace App\Services\Guardian;
 
-use App\Services\Interface\NewsServiceInterface;
+use App\Data\GuardianResponseData;
+use App\Services\Abstract\AbstractNewsService;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Http;
+use Spatie\LaravelData\DataCollection;
 
 /**
  * Service to fetch data from guardian's API Service
+ *
+ * @throws \Exception
+ *
+ * @see https://open-platform.theguardian.com/documentation/search
  */
-class GuardianRequestService implements NewsServiceInterface
+class GuardianRequestService extends AbstractNewsService
 {
     /**
-     * Summary of getData
-     *
-     * @param  array  $params  Parameters to get data for the feed [See Attached link]
-     *
-     * @throws \Exception
-     *
-     * @see https://open-platform.theguardian.com/documentation/search
+     * @var array<string>
      */
-    public static function getData(array $params): Response
-    {
-        $response = Http::withUrlParameters([
-            'endpoint' => config('guardian.news_url'),
-            'api-key' => config('guardian.api_key'),
-            'parameters' => http_build_query($params),
-        ])->get('{+endpoint}/search?api-key={api-key}&{parameters}');
+    public array $additionalParameters = [];
 
+    public function getUri(): string
+    {
+        return config('guardian.news_url').'/search';
+    }
+
+    public function getParameters(): array
+    {
+        return [
+            'api-key' => config('guardian.api_key'),
+            ...$this->additionalParameters,
+        ];
+    }
+
+    /**
+     * Method to set additional parameter to the guardian request
+     *
+     * @param  array<string>  $params
+     */
+    public function setAdditionalParameters(array $params): static
+    {
+        $this->additionalParameters = $params;
+
+        return $this;
+    }
+
+    public function exceptions(Response $response)
+    {
         if ($response->getStatusCode() === 401) {
             throw new \Exception('Missing keys for API call');
         }
@@ -35,7 +55,10 @@ class GuardianRequestService implements NewsServiceInterface
         $response->onError(function () {
             throw new \Exception('Error occurred during API request');
         });
+    }
 
-        return $response;
+    public function formatResponse(): DataCollection
+    {
+        return GuardianResponseData::collect($this->response->json()['response']['results'], DataCollection::class);
     }
 }

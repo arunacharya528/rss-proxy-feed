@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Data\GuardianResponseData;
 use App\Services\Guardian\GuardianRequestService;
 use Tests\TestCase;
 
@@ -13,13 +14,22 @@ class GuardianRequestServiceTest extends TestCase
 
         config(['guardian.api_key' => null]);
 
-        $response = GuardianRequestService::getData(['q' => 'Movies']);
+        GuardianRequestService::make()->sendRequest();
     }
 
     public function test_can_search_data(): void
     {
-        $response = GuardianRequestService::getData(['q' => 'Movies']);
+        $response = GuardianRequestService::make()->setAdditionalParameters(['q' => 'Movies'])->sendRequest()->getResponse();
 
         $this->assertEquals(200, $response->getStatusCode());
+    }
+
+    public function test_will_return_array_of_data_transfer_objects_as_response(): void
+    {
+        $data = GuardianRequestService::make()->setAdditionalParameters(['q' => 'Movies'])->sendRequest()->formatResponse();
+
+        foreach ($data as $row) {
+            $this->assertInstanceOf(GuardianResponseData::class, $row);
+        }
     }
 }
