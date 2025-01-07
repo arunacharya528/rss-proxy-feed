@@ -27,6 +27,8 @@ composer i
 
 cat .env.example > .env
 
+php artisan key:generate
+
 docker-compose up
 
 ```
